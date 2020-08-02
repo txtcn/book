@@ -27,7 +27,7 @@ def main(version, filedir):
 
   for root, dir_li, file_li in walk(filedir):
     now = root[prefix_len:]
-    if not now or now[0] in "._":
+    if not now or now[0] in "._" or "." not in now:
       continue
     file_li = [int(i) for i in file_li if i.isdigit()]
     if not file_li:
