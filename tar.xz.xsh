@@ -10,6 +10,8 @@ import shutil
 from os.path import dirname,join,basename,abspath,getsize
 from pathlib import Path
 
+GIT = basename(dirname(abspath(__file__)))
+
 SIZE_MIN = int(20*1000*1000*3.7)
 
 def main(version, filedir):
@@ -29,9 +31,9 @@ def main(version, filedir):
     now = root[prefix_len:]
     if not now or now[0] in "._" or "." not in now:
       continue
-    file_li = [int(i) for i in file_li if i.isdigit()]
-    if not file_li:
-      continue
+    # file_li = [int(i) for i in file_li if i.isdigit()]
+    # if not file_li:
+    #   continue
 
     outdir = join(tmpdir, root[prefix_len:])
     Path(outdir).mkdir(parents=True,exist_ok=True)
@@ -51,14 +53,15 @@ def main(version, filedir):
     print("还需",round((SIZE_MIN - total_size)/1024/1024,2),"MB")
     return
   cd @(tmpdir)
-  xzpath = f"/tmp/data.{TODAY}.txz"
+  xzpath = "/tmp/book.txz"
+  rm -rf @(xzpath)
   tar -I 'pixz -9' -cf @(xzpath)  ./
 
   # go get github.com/github-release/github-release
 
-  github-release release --user txtcn --repo data --tag "v$version" --name "$version" --description "$version"
+  github-release release --user txtcn --repo @(GIT) --tag "v$version" --name "$version" --description "$version"
   sleep 5
-  github-release upload --user txtcn --repo data --tag "v$version" --name "data.txz" --file @(xzpath)
+  github-release upload --user txtcn --repo @(GIT) --tag "v$version" --name "data.txz" --file @(xzpath)
   os.remove(xzpath)
   shutil.rmtree(tmpdir)
   for i in to_rm:
@@ -67,7 +70,8 @@ def main(version, filedir):
 
 if __name__ == "__main__":
   $GITHUB_TOKEN=$(cat ~/.config/github.token).strip(" \n")
-  version = $(curl -s "https://api.github.com/repos/txtcn/book/releases/latest" | jq -r .tag_name)
+  url = f"https://api.github.com/repos/txtcn/{GIT}/releases/latest"
+  version = $(curl -s @(url) | jq -r .tag_name)
   filedir = dirname(abspath(__file__))
   while 1:
     cd @(filedir)
